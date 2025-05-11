@@ -89,6 +89,16 @@
       box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
       transform: scale(1.05);
     }
+    #asciiWidth {
+      width: 100px;
+      background: #0d1b2a;
+      color: #00f7ff;
+      border: 1px solid #00f7ff;
+      padding: 5px;
+      margin: 10px;
+      font-family: 'Roboto Mono', monospace;
+      border-radius: 5px;
+    }
     #preview {
       max-width: 100%;
       width: 250px;
@@ -150,6 +160,7 @@
       .upload-btn, .download-btn { font-size: 0.9rem; padding: 0.6rem 1.2rem; }
       pre { font-size: 0.7rem; max-height: 40vh; }
       #preview { width: 200px; }
+      #asciiWidth { width: 80px; font-size: 0.8rem; }
       .instructions { font-size: 0.7rem; }
     }
     @media (min-width: 601px) and (max-width: 900px) {
@@ -164,6 +175,7 @@
     <h1>Neon ASCII Dot Art Converter</h1>
     <label for="imageInput" class="upload-btn">Unggah Gambar</label>
     <input type="file" id="imageInput" accept="image/*">
+    <input type="number" id="asciiWidth" value="40" min="20" max="60" placeholder="Lebar ASCII">
     <img id="preview" alt="Image Preview">
     <div id="output"></div>
     <div>
@@ -171,8 +183,9 @@
       <button id="downloadTxtBtn" class="download-btn">Unduh Teks</button>
     </div>
     <p class="instructions">
-      Catatan: Untuk hasil terbaik di Notepad, gunakan font monospace seperti Consolas atau Courier New.<br>
-      Buka file HTML di browser untuk melihat ASCII art dengan styling neon.
+      Catatan: Gunakan lebar ASCII 40-60 untuk HTTP Custom Note.<br>
+      Salin teks dari file .txt ke custom note, atau gunakan &lt;pre&gt; di HTML jika didukung.<br>
+      Di Notepad, atur font ke Consolas atau Courier New untuk hasil rapi.
     </p>
   </div>
 
@@ -202,7 +215,8 @@
       // Buat canvas untuk konversi
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 80; // Lebar ASCII
+      const asciiWidth = parseInt(document.getElementById('asciiWidth').value) || 40;
+      canvas.width = asciiWidth; // Lebar ASCII disesuaikan
       canvas.height = Math.round(img.height * (canvas.width / img.width));
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -214,9 +228,8 @@
           const i = (y * canvas.width + x) * 4;
           const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
           const brightness = (r + g + b) / 3;
-          // Gunakan kepadatan titik berdasarkan kecerahan (0-255)
-          const density = Math.floor((255 - brightness) / 40); // Skala disesuaikan untuk kontras lebih baik
-          asciiArt += '.'.repeat(Math.min(density, 5)) + ' ';
+          const density = Math.floor((255 - brightness) / 40); // Skala untuk kontras
+          asciiArt += '.'.repeat(Math.min(density, 4)) + ' ';
         }
         asciiArt += '\n';
       }
