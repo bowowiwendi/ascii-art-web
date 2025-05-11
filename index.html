@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon ASCII Art Converter</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background: linear-gradient(135deg, #0d1b2a, #1b263b);
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+    /* Efek latar belakang gradien animasi */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 255, 255, 0.1), transparent);
+      animation: pulse 15s infinite;
+      z-index: -1;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.2; }
+      50% { transform: scale(1.2); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 0.2; }
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      color: #00f7ff;
+      text-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff;
+      margin-bottom: 20px;
+      animation: neon-flicker 3s infinite;
+    }
+    @keyframes neon-flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.95; }
+    }
+    .container {
+      background: rgba(10, 25, 47, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      max-width: 800px;
+      width: 90%;
+      text-align: center;
+      animation: fade-in 1s ease-out;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .upload-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(45deg, #ff00ff, #00f7ff);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      transition: all 0.3s ease;
+    }
+    .upload-btn:hover {
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+      transform: scale(1.05);
+    }
+    #preview {
+      max-width: 250px;
+      margin: 20px auto;
+      border: 2px solid #00f7ff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+      display: none;
+      transition: opacity 0.5s ease;
+    }
+    pre {
+      background: #0d1b2a;
+      color: #00ffcc;
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      text-align: left;
+      white-space: pre-wrap;
+      font-size: 0.9rem;
+      box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.2);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    #output {
+      margin-top: 20px;
+    }
+    .download-btn {
+      display: none;
+      padding: 12px 24px;
+      background: linear-gradient(45deg, #00f7ff, #ff00ff);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+    .download-btn:hover {
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+      transform: scale(1.05);
+    }
+    /* Responsif */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      .container { padding: 20px; }
+      .upload-btn, .download-btn { font-size: 0.9rem; padding: 10px 20px; }
+      pre { font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <divongs="container">
+    <h1>Neon ASCII Art Converter</h1>
+    <label for="imageInput" class="upload-btn">Unggah Gambar</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="preview" alt="Image Preview">
+    <div id="output"></div>
+    <button id="downloadBtn" class="download-btn">Unduh HTML</button>
+  </div>
+
+  <script>
+    const asciiChars = ['@', '#', 'S', '%', '?', '*', '+', ':', ',', '.'];
+    const outputDiv = document.getElementById('output');
+    const downloadBtn = document.getElementById('downloadBtn');
+    let htmlContent = '';
+
+    document.getElementById('imageInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Tampilkan pratinjau gambar
+      const preview = document.getElementById('preview');
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      preview.style.opacity = '0';
+      setTimeout(() => preview.style.opacity = '1', 100);
+
+      // Baca dan proses gambar
+      const img = new Image();
+      img.src = preview.src;
+      await new Promise(resolve => img.onload = resolve);
+
+      // Buat canvas untuk konversi
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 80; // Lebar ASCII
+      canvas.height = Math.round(img.height * (canvas.width / img.width));
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Konversi ke ASCII
+      let asciiArt = '';
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const i = (y * canvas.width + x) * 4;
+          const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+          const brightness = (r + g + b) / 3;
+          const charIndex = Math.floor((brightness / 255) * (asciiChars.length - 1));
+          asciiArt += asciiChars[charIndex];
+        }
+        asciiArt += '\n';
+      }
+
+      // Buat konten HTML
+      htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>ASCII Art</title>
+          <style>
+            body { font-family: monospace; background: #000; color: #fff; text-align: center; }
+            pre { background: #000; color: #00ffcc; padding: 20px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <h1>ASCII Art dari ${file.name}</h1>
+          <pre>${asciiArt}</pre>
+        </body>
+        </html>
+      `;
+
+      // Tampilkan ASCII art di halaman
+      outputDiv.innerHTML = `<pre>${asciiArt}</pre>`;
+      downloadBtn.style.display = 'block';
+      downloadBtn.style.opacity = '0';
+      setTimeout(() => downloadBtn.style.opacity = '1', 100);
+    });
+
+    // Tangani unduhan file HTML
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ascii_image.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
