@@ -24,7 +24,6 @@
       position: relative;
       padding: 2vh 2vw;
     }
-    /* Efek latar belakang gradien animasi */
     body::before {
       content: '';
       position: fixed;
@@ -107,7 +106,8 @@
       border-radius: 10px;
       display: inline-block;
       text-align: left;
-      white-space: pre-wrap;
+      white-space: pre;
+      font-family: 'Roboto Mono', monospace;
       font-size: 0.9rem;
       box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.2);
       max-height: 50vh;
@@ -131,11 +131,17 @@
       cursor: pointer;
       box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
       transition: all 0.3s ease;
-      margin-top: 1rem;
+      margin: 0.5rem;
     }
     .download-btn:hover {
       box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
       transform: scale(1.05);
+    }
+    .instructions {
+      font-size: 0.8rem;
+      color: #e0e0e0;
+      margin-top: 1rem;
+      text-align: center;
     }
     /* Responsivitas */
     @media (max-width: 600px) {
@@ -144,6 +150,7 @@
       .upload-btn, .download-btn { font-size: 0.9rem; padding: 0.6rem 1.2rem; }
       pre { font-size: 0.7rem; max-height: 40vh; }
       #preview { width: 200px; }
+      .instructions { font-size: 0.7rem; }
     }
     @media (min-width: 601px) and (max-width: 900px) {
       h1 { font-size: 2rem; }
@@ -159,13 +166,22 @@
     <input type="file" id="imageInput" accept="image/*">
     <img id="preview" alt="Image Preview">
     <div id="output"></div>
-    <button id="downloadBtn" class="download-btn">Unduh HTML</button>
+    <div>
+      <button id="downloadHtmlBtn" class="download-btn">Unduh HTML</button>
+      <button id="downloadTxtBtn" class="download-btn">Unduh Teks</button>
+    </div>
+    <p class="instructions">
+      Catatan: Untuk hasil terbaik di Notepad, gunakan font monospace seperti Consolas atau Courier New.<br>
+      Buka file HTML di browser untuk melihat ASCII art dengan styling neon.
+    </p>
   </div>
 
   <script>
     const outputDiv = document.getElementById('output');
-    const downloadBtn = document.getElementById('downloadBtn');
+    const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+    const downloadTxtBtn = document.getElementById('downloadTxtBtn');
     let htmlContent = '';
+    let asciiArt = '';
 
     document.getElementById('imageInput').addEventListener('change', async (event) => {
       const file = event.target.files[0];
@@ -191,7 +207,7 @@
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       // Konversi ke ASCII menggunakan titik (.)
-      let asciiArt = '';
+      asciiArt = '';
       const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
@@ -199,8 +215,8 @@
           const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
           const brightness = (r + g + b) / 3;
           // Gunakan kepadatan titik berdasarkan kecerahan (0-255)
-          const density = Math.floor((255 - brightness) / 51); // Skala ke 0-5
-          asciiArt += '.'.repeat(density) + ' ';
+          const density = Math.floor((255 - brightness) / 40); // Skala disesuaikan untuk kontras lebih baik
+          asciiArt += '.'.repeat(Math.min(density, 5)) + ' ';
         }
         asciiArt += '\n';
       }
@@ -214,8 +230,8 @@
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>ASCII Dot Art</title>
           <style>
-            body { font-family: monospace; background: #000; color: #00ffcc; text-align: center; }
-            pre { background: #000; color: #00ffcc; padding: 20px; display: inline-block; }
+            body { font-family: 'Courier New', monospace; background: #000; color: #00ffcc; text-align: center; }
+            pre { background: #000; color: #00ffcc; padding: 20px; display: inline-block; white-space: pre; }
           </style>
         </head>
         <body>
@@ -227,18 +243,36 @@
 
       // Tampilkan ASCII art di halaman
       outputDiv.innerHTML = `<pre>${asciiArt}</pre>`;
-      downloadBtn.style.display = 'block';
-      downloadBtn.style.opacity = '0';
-      setTimeout(() => downloadBtn.style.opacity = '1', 100);
+      downloadHtmlBtn.style.display = 'block';
+      downloadTxtBtn.style.display = 'block';
+      downloadHtmlBtn.style.opacity = '0';
+      downloadTxtBtn.style.opacity = '0';
+      setTimeout(() => {
+        downloadHtmlBtn.style.opacity = '1';
+        downloadTxtBtn.style.opacity = '1';
+      }, 100);
     });
 
     // Tangani unduhan file HTML
-    downloadBtn.addEventListener('click', () => {
-      const blob = new Blob([htmlContent], { type: 'text/html' });
+    downloadHtmlBtn.addEventListener('click', () => {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = 'ascii_dot_art.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Tangani unduhan file teks
+    downloadTxtBtn.addEventListener('click', () => {
+      const blob = new Blob([asciiArt], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ascii_dot_art.txt';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
